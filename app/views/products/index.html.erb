@@ -1,0 +1,93 @@
+<script>
+  function checkAllProducts() {
+    $('.bulk_edit_product').prop('checked', true);
+  }
+
+  function uncheckAllProducts() {
+    $('.bulk_edit_product').prop('checked', false);
+  }
+
+  function checkMasterCheckbox() {
+    $('#bulk_edit_master_checkbox').prop('checked', true);
+  }
+
+  function uncheckMasterCheckbox() {
+    $('#bulk_edit_master_checkbox').prop('checked', false);
+  }
+
+  function updateMasterCheckbox() {
+    if (allProductsChecked())
+      checkMasterCheckbox();
+    else
+      uncheckMasterCheckbox();
+  }
+
+  function allProductsChecked() {
+    return $('.bulk_edit_product').length == CheckedProducts().length;
+  }
+
+  function CheckedProducts() {
+    return $('.bulk_edit_product:checked');
+  }
+
+  function checkedProductIds() {
+    return CheckedProducts().map(function() { return this.value; }).get().join(',');
+  }
+
+  function updateBulkEditLink() {
+    var bulkEditLink = $('#bulk_edit_link');
+    var numberOfCheckedProducts = CheckedProducts().length;
+
+    if (numberOfCheckedProducts > 0) {
+      var linkTarget = bulkEditLink.data('bulkEditPath');
+      var newLinkText = bulkEditLink.data('defaultLinkText') + ' (' + numberOfCheckedProducts + ')';
+
+      bulkEditLink.text(newLinkText);
+      bulkEditLink.attr('href', linkTarget + '&ids=' + checkedProductIds());
+      bulkEditLink.css('visibility', 'visible');
+    } else
+      bulkEditLink.css('visibility', 'hidden');
+  }
+
+  $(document).on('ready page:load', function() {
+    $('.bulk_edit_product').on('change', function() {
+      updateMasterCheckbox();
+      updateBulkEditLink();
+    });
+
+    $('#bulk_edit_master_checkbox').on('change', function() {
+      if (this.checked)
+        checkAllProducts();
+      else
+        uncheckAllProducts();
+
+      updateBulkEditLink();
+    });
+  });
+</script>
+
+<h1>Products</h1>
+
+<%= link_to nil, nil, id: 'bulk_edit_link', data: {default_link_text: 'Edit Products', bulk_edit_path: '/some/path'}, class: 'hidden' %>
+
+<table id="products">
+  <thead>
+    <tr>
+      <th><%= content_tag(:input, nil, type: 'checkbox', id: 'bulk_edit_master_checkbox') %></th>
+      <th>Title</th>
+      <th>Price</th>
+      <th>Available</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @products.each do |product| %>
+      <tr>
+        <td><%= content_tag(:input, nil, type: 'checkbox', value: product.id, class: 'bulk_edit_product') %></td>
+        <td><%= product.title %></td>
+        <td class="right"><%= number_to_currency(product.price) %></td>
+        <td class="center"><%= product.available? ? '✓' : '✗' %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
