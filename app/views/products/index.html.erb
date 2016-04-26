@@ -44,9 +44,9 @@
 
       bulkEditLink.text(newLinkText);
       bulkEditLink.attr('href', linkTarget + '&ids=' + checkedProductIds());
-      bulkEditLink.css('visibility', 'visible');
+      bulkEditLink.removeClass('hidden');
     } else
-      bulkEditLink.css('visibility', 'hidden');
+      bulkEditLink.addClass('hidden');
   }
 
   $(document).on('ready page:load', function() {
@@ -68,12 +68,12 @@
 
 <h1>Products</h1>
 
-<%= link_to nil, nil, id: 'bulk_edit_link', data: {default_link_text: 'Edit Products', bulk_edit_path: '/some/path'}, class: 'hidden' %>
+<a id="bulk_edit_link" data-default-link-text="Edit Products" data-bulk-edit-path="/some/path" class="hidden">&nbsp;</a>
 
 <table id="products">
   <thead>
     <tr>
-      <th><%= content_tag(:input, nil, type: 'checkbox', id: 'bulk_edit_master_checkbox') %></th>
+      <th><input type="checkbox" id="bulk_edit_master_checkbox"></th>
       <th>Title</th>
       <th>Price</th>
       <th>Available</th>
@@ -83,7 +83,7 @@
   <tbody>
     <% @products.each do |product| %>
       <tr>
-        <td><%= content_tag(:input, nil, type: 'checkbox', value: product.id, class: 'bulk_edit_product') %></td>
+        <td><input type="checkbox" value="<%= product.id %>" class="bulk_edit_product"></td>
         <td><%= product.title %></td>
         <td class="right"><%= number_to_currency(product.price) %></td>
         <td class="center"><%= product.available? ? '✓' : '✗' %></td>
