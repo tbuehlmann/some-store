@@ -8,6 +8,7 @@ gem 'coffee-rails', '~> 4.1.0'
 gem 'therubyracer'
 gem 'jquery-rails'
 gem 'turbolinks'
+gem 'vuejs-rails'
 
 group :development do
   gem 'pry-rails'

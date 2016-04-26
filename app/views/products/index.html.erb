@@ -1,93 +1,146 @@
 <script>
-  function checkAllProducts() {
-    $('.bulk_edit_product').prop('checked', true);
-  }
+  // function checkAllProducts() {
+  //   $('.bulk_edit_product').prop('checked', true);
+  // }
 
-  function uncheckAllProducts() {
-    $('.bulk_edit_product').prop('checked', false);
-  }
+  // function uncheckAllProducts() {
+  //   $('.bulk_edit_product').prop('checked', false);
+  // }
 
-  function checkMasterCheckbox() {
-    $('#bulk_edit_master_checkbox').prop('checked', true);
-  }
+  // function checkMasterCheckbox() {
+  //   $('#bulk_edit_master_checkbox').prop('checked', true);
+  // }
 
-  function uncheckMasterCheckbox() {
-    $('#bulk_edit_master_checkbox').prop('checked', false);
-  }
+  // function uncheckMasterCheckbox() {
+  //   $('#bulk_edit_master_checkbox').prop('checked', false);
+  // }
 
-  function updateMasterCheckbox() {
-    if (allProductsChecked())
-      checkMasterCheckbox();
-    else
-      uncheckMasterCheckbox();
-  }
+  // function updateMasterCheckbox() {
+  //   if (allProductsChecked())
+  //     checkMasterCheckbox();
+  //   else
+  //     uncheckMasterCheckbox();
+  // }
 
-  function allProductsChecked() {
-    return $('.bulk_edit_product').length == CheckedProducts().length;
-  }
+  // function allProductsChecked() {
+  //   return $('.bulk_edit_product').length == CheckedProducts().length;
+  // }
 
-  function CheckedProducts() {
-    return $('.bulk_edit_product:checked');
-  }
+  // function CheckedProducts() {
+  //   return $('.bulk_edit_product:checked');
+  // }
 
-  function checkedProductIds() {
-    return CheckedProducts().map(function() { return this.value; }).get().join(',');
-  }
+  // function checkedProductIds() {
+  //   return CheckedProducts().map(function() { return this.value; }).get().join(',');
+  // }
 
-  function updateBulkEditLink() {
-    var bulkEditLink = $('#bulk_edit_link');
-    var numberOfCheckedProducts = CheckedProducts().length;
+  // function updateBulkEditLink() {
+  //   var bulkEditLink = $('#bulk_edit_link');
+  //   var numberOfCheckedProducts = CheckedProducts().length;
 
-    if (numberOfCheckedProducts > 0) {
-      var linkTarget = bulkEditLink.data('bulkEditPath');
-      var newLinkText = bulkEditLink.data('defaultLinkText') + ' (' + numberOfCheckedProducts + ')';
+  //   if (numberOfCheckedProducts > 0) {
+  //     var linkTarget = bulkEditLink.data('bulkEditPath');
+  //     var newLinkText = bulkEditLink.data('defaultLinkText') + ' (' + numberOfCheckedProducts + ')';
 
-      bulkEditLink.text(newLinkText);
-      bulkEditLink.attr('href', linkTarget + '&ids=' + checkedProductIds());
-      bulkEditLink.removeClass('hidden');
-    } else
-      bulkEditLink.addClass('hidden');
-  }
+  //     bulkEditLink.text(newLinkText);
+  //     bulkEditLink.attr('href', linkTarget + '&ids=' + checkedProductIds());
+  //     bulkEditLink.removeClass('hidden');
+  //   } else
+  //     bulkEditLink.addClass('hidden');
+  // }
 
+  // $(document).on('ready page:load', function() {
+  //   $('.bulk_edit_product').on('change', function() {
+  //     updateMasterCheckbox();
+  //     updateBulkEditLink();
+  //   });
+
+  //   $('#bulk_edit_master_checkbox').on('change', function() {
+  //     if (this.checked)
+  //       checkAllProducts();
+  //     else
+  //       uncheckAllProducts();
+
+  //     updateBulkEditLink();
+  //   });
+  // });
+</script>
+
+<script>
   $(document).on('ready page:load', function() {
-    $('.bulk_edit_product').on('change', function() {
-      updateMasterCheckbox();
-      updateBulkEditLink();
-    });
+    new Vue({
+      el: "#products",
+      computed: {
+        bulkEditLinkText: function() {
+          var defaultLinkText = $('#bulk_edit_link').data('defaultLinkText');
+          var numberOfCheckedProductCheckboxes = this.checkedProductCheckboxes().length;
 
-    $('#bulk_edit_master_checkbox').on('change', function() {
-      if (this.checked)
-        checkAllProducts();
-      else
-        uncheckAllProducts();
+          return defaultLinkText + ' (' + numberOfCheckedProductCheckboxes + ')';
+        },
+        bulkEditVisibilityClass: function() {
+          if (this._anyProductCheckboxChecked())
+            return '';
+          else
+            return 'hidden';
+        },
+        editLinkPath: function() {
+          var defaultLinkPath = $('#bulk_edit_link').data('bulkEditPath');
+          var checkedProductIds = $.map(this.checkedProductCheckboxes(), function(productCheckbox) {
+            return productCheckbox.productId;
+          });
 
-      updateBulkEditLink();
+          return defaultLinkPath + '?ids=' + checkedProductIds.join(',');
+        }
+      },
+      methods: {
+        checkedProductCheckboxes: function() {
+          return this.$children.filter(function(productCheckbox) {
+            return productCheckbox.checked;
+          });
+        },
+        _anyProductCheckboxChecked: function() {
+          return this.$children.some(function(productCheckbox) {
+            return productCheckbox.checked;
+          });
+        }
+      },
+      components: {
+        'product-checkbox': {
+          template: '<input type="checkbox" v-model="checked" value="{{ productId }}" class="product_checkbox">',
+          props: ['productId'],
+          data: function() {
+            return {checked: false};
+          }
+        }
+      }
     });
   });
 </script>
 
 <h1>Products</h1>
 
-<a id="bulk_edit_link" data-default-link-text="Edit Products" data-bulk-edit-path="/some/path" class="hidden">&nbsp;</a>
+<div id="products">
+  <a href="{{ editLinkPath }}" id="bulk_edit_link" data-default-link-text="Edit Products" data-bulk-edit-path="/some/path" class="{{ bulkEditVisibilityClass }}">{{ bulkEditLinkText }}</a>
 
-<table id="products">
-  <thead>
-    <tr>
-      <th><input type="checkbox" id="bulk_edit_master_checkbox"></th>
-      <th>Title</th>
-      <th>Price</th>
-      <th>Available</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <% @products.each do |product| %>
+  <table>
+    <thead>
       <tr>
-        <td><input type="checkbox" value="<%= product.id %>" class="bulk_edit_product"></td>
-        <td><%= product.title %></td>
-        <td class="right"><%= number_to_currency(product.price) %></td>
-        <td class="center"><%= product.available? ? '✓' : '✗' %></td>
+        <th><input type="checkbox" id="bulk_edit_master_checkbox"></th>
+        <th>Title</th>
+        <th>Price</th>
+        <th>Available</th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+
+    <tbody>
+      <% @products.each do |product| %>
+        <tr>
+          <td><product-checkbox product-id="<%= product.id %>" class="bulk_edit_product"></product-checkbox></td>
+          <td><%= product.title %></td>
+          <td class="right"><%= number_to_currency(product.price) %></td>
+          <td class="center"><%= product.available? ? '✓' : '✗' %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
